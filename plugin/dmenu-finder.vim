@@ -1,7 +1,7 @@
 " dmenu-finder.vim - File and buffer navigation using dmenu
 " Author: Hassan Kibirige <has2k1+vim@gmail.com>
 " Credit: http://bit.ly/1lmRa9u
-" Last Modified: Thursday 03 April 2014 02:00:30 AM CDT
+" Last Modified: Thursday 03 April 2014 03:27:35 AM CDT
 " License: Vim License (see :help license)
 
 
@@ -70,7 +70,18 @@ function! s:find_in_repo()
 endfunction
 
 " find line in current buffer
-function! s:find_in_buffer()
+function! s:find_buffer()
+  let s:prompt = 'Buffers: '
+  " From all the created buffers,
+  " remove the unlisted, remove those that do not exist
+  let buffer_numbers = range(1, bufnr('$'))
+  call filter(buffer_numbers, 'buflisted(v:val)')
+  call filter(buffer_numbers, 'bufexists(v:val)')
+
+  " Buffer numbers to names
+  let filenames = map(copy(buffer_numbers), 'bufname(v:val)')
+  echom string(filenames)
+  return s:select_and_open_file(filenames, '')
 endfunction
 
 " stanitize line endings
@@ -137,6 +148,7 @@ call s:init_variable('g:dmenu_finder_dmenu_command', 'dmenu')
 " Public Commands
 " ---------------
 command! -n=0 DmenuFinderFindFile call s:find_file()
+command! -n=0 DmenuFinderFindBuffer call s:find_buffer()
 command! -n=0 DmenuFinderCurDir call s:find_in_curdir()
 command! -n=0 DmenuFinderRepo call s:find_in_repo()
 command! -n=0 DmenuFinderClearCache call s:clear_cache()
