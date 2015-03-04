@@ -1,7 +1,7 @@
 " dmenu-finder.vim - File and buffer navigation using dmenu
 " Author: Hassan Kibirige <has2k1+vim@gmail.com>
 " Credit: http://bit.ly/1lmRa9u
-" Last Modified: Thursday 03 April 2014 03:27:35 AM CDT
+" Last Modified: Wednesday 21 May 2014 05:31:45 PM CDT
 " License: Vim License (see :help license)
 
 
@@ -27,8 +27,7 @@ let s:cache = {}
 " return 1 if set, 0 if not set
 function! s:init_variable(var, value)
   if !exists(a:var)
-    exec 'let ' . a:var . ' = ' . "'" .
-          \ substitute(a:value, "'", "''", "g") . "'"
+    let {a:var} = a:value
     return 1
   endif
   return 0
@@ -61,6 +60,11 @@ endfunction
 
 " find file in git repository
 function! s:find_in_repo()
+  if !s:is_repo()
+    echom 'Not in a git repository'
+    return 0
+  endif
+
   let s:prompt = 'Repository: '
   let cwd = getcwd()
   execute 'cd' fnameescape(b:git_toplevel)
@@ -73,14 +77,14 @@ endfunction
 function! s:find_buffer()
   let s:prompt = 'Buffers: '
   " From all the created buffers,
-  " remove the unlisted, remove those that do not exist
+  " remove unlisted buffers
+  " remove current buffer
   let buffer_numbers = range(1, bufnr('$'))
-  call filter(buffer_numbers, 'buflisted(v:val)')
-  call filter(buffer_numbers, 'bufexists(v:val)')
+  let keep = 'buflisted(v:val) && v:val != bufnr("%")'
+  call filter(buffer_numbers, keep)
 
   " Buffer numbers to names
   let filenames = map(copy(buffer_numbers), 'bufname(v:val)')
-  echom string(filenames)
   return s:select_and_open_file(filenames, '')
 endfunction
 
@@ -98,6 +102,7 @@ endfunction
 " Search the filesystem and use dmenu
 function! s:select_and_open_file(filenames, basepath)
   let fname = a:basepath . s:pipe_to_dmenu(a:filenames)
+  echom fname
   if filereadable(fname)
     execute ":e " . fnameescape(fname)
   endif
@@ -111,19 +116,18 @@ function! s:dmenu()
   return g:dmenu_finder_dmenu_command . ' -p "' . s:prompt . '"'
 endfunction
 
+
 " Return true if this buffer is part of a repository
 function! s:is_repo()
-  if exists("b:git_toplevel")
+  if exists('b:git_toplevel')
     return 1
-  endif
-  return 0
-endfunction
-
-" For the buffer record the top level repository directory
-function! s:detect_repo()
-  let result = s:chomp(system('git rev-parse --show-toplevel')) . '/'
-  if !v:shell_error
-    let b:git_toplevel = result
+  else
+    let result = s:chomp(system('git rev-parse --show-toplevel')) . '/'
+    if !v:shell_error
+      let b:git_toplevel = result
+      return 1
+    endif
+    return 0
   endif
 endfunction
 
@@ -141,8 +145,6 @@ endfunction
 " Options
 " -------
 call s:init_variable('g:dmenu_finder_dmenu_command', 'dmenu')
-" call s:init_variable('g:dmenu_finder_cache_dir', '/tmp/')
-" let s:cache_dir = g:dmenu_finder_cache_dir
 
 
 " Public Commands
@@ -154,12 +156,8 @@ command! -n=0 DmenuFinderRepo call s:find_in_repo()
 command! -n=0 DmenuFinderClearCache call s:clear_cache()
 
 
-" Autocommands
-" ------------
-augroup dmenufinder
-  autocmd!
-  autocmd BufNewFile,BufReadPost * call s:detect_repo()
-augroup END
+" Clean up
+" --------
 
 " Restore previous external compatibility options
 let &cpo = s:save_cpo
