@@ -1,8 +1,8 @@
 " dmenu-finder.vim - File and buffer navigation using dmenu
 " Author: Hassan Kibirige <has2k1+vim@gmail.com>
 " Credit: http://bit.ly/1lmRa9u
-" Last Modified: Wednesday 21 May 2014 05:31:45 PM CDT
 " License: Vim License (see :help license)
+" Repository: https://github.com/has2k1/vim-dmenu-finder
 
 
 if exists("g:loaded_dmenu_finder")
@@ -33,6 +33,7 @@ function! s:init_variable(var, value)
   return 0
 endfunction
 
+
 " Try to be clever
 function! s:find_file()
   if s:is_repo()
@@ -40,6 +41,7 @@ function! s:find_file()
   endif
   return s:find_in_cur_dir()
 endfunction
+
 
 " find in current directory
 function! s:find_in_curdir()
@@ -58,10 +60,11 @@ function! s:find_in_curdir()
   return s:select_and_open_file(s:cache[key], '')
 endfunction
 
+
 " find file in git repository
 function! s:find_in_repo()
   if !s:is_repo()
-    echom 'Not in a git repository'
+    echohl ErrorMsg | echo "Not in a git repository" | echohl None
     return 0
   endif
 
@@ -72,6 +75,7 @@ function! s:find_in_repo()
   execute 'cd' fnameescape(cwd)
   return s:select_and_open_file(filenames, b:git_toplevel)
 endfunction
+
 
 " find line in current buffer
 function! s:find_buffer()
@@ -88,28 +92,46 @@ function! s:find_buffer()
   return s:select_and_open_file(filenames, '')
 endfunction
 
+
 " stanitize line endings
 function! s:chomp(str)
   return substitute(a:str, '\n$', '', '')
 endfunction
 
+
 " Makes the dmenu call
 function! s:pipe_to_dmenu(lines)
-  return s:chomp(system('echo '. join(a:lines, '\\n') .
-        \ " | " . s:dmenu()))
+  let cmd = 'echo ' . join(a:lines, '\\n') . " | " . s:dmenu()
+  let result = system(cmd)
+
+  if v:shell_error
+    echohl ErrorMsg | echo "Nothing from dmenu" | echohl None
+  endif
+
+  return s:chomp(result)
 endfunction
+
 
 " Search the filesystem and use dmenu
 function! s:select_and_open_file(filenames, basepath)
-  let fname = a:basepath . s:pipe_to_dmenu(a:filenames)
-  echom fname
+  " Remove empty lines
+  call filter(a:filenames, '!empty(v:val)')
+  let selected = s:pipe_to_dmenu(a:filenames)
+  let fname = a:basepath . selected
+
   if filereadable(fname)
-    execute ":e " . fnameescape(fname)
+    execute ':e ' . fnameescape(fname)
+  elseif !empty(selected)
+    echom fname
+    echohl ErrorMsg | echo "File does not exist!" | echohl None
   endif
+
 endfunction
+
 
 function! s:go_to_line(str)
 endfunction
+
 
 " Return the dmenu command string
 function! s:dmenu()
@@ -131,10 +153,12 @@ function! s:is_repo()
   endif
 endfunction
 
+
 " Return a list of filenames
 function! s:get_filenames(files_cmd)
   return split(s:chomp(system(a:files_cmd)), '\n')
 endfunction
+
 
 " Clean stuff
 function! s:clear_cache()
