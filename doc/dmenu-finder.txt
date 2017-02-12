@@ -1,0 +1,72 @@
+*dmenu-finder.txt* Using dmenu to open files in vim
+
+                  _   _   _   _   _     _   _   _   _   _   _
+                 / \ / \ / \ / \ / \   / \ / \ / \ / \ / \ / \
+                ( d | m | e | n | u ) ( f | i | n | d | e | r )
+                 \_/ \_/ \_/ \_/ \_/   \_/ \_/ \_/ \_/ \_/ \_/
+
+                  Use dmenu to open files and switch buffers
+
+
+=============================================================================
+CONTENTS                                                     *DmenuFinder*
+
+1. Usage ....................................... |DmenuFinder-usage|
+2. Mappings .................................... |DmenuFinder-mappings|
+3. License ..................................... |DmenuFinder-license|
+4. Contributing ................................ |DmenuFinder-contributing|
+
+
+=============================================================================
+1. Usage                                               *DmenuFinder-usage*
+
+Tell the plugin where to find dmenu: >
+
+   let g:dmenu_finder_dmenu_command="/usr/bin/dmenu"
+
+The available commands are:
+
+
+                                                    *:DmenuFinderFindFile*
+:DmenuFinderFindFile
+   Find file. This command tries to be smart. If the current directory is
+   a part of version control then the file list will be of files from the
+   repository. Otherwise, the list will be of files in the current directory
+   and all its sub-directories.
+
+                                                    *:DmenuFinderCurDir*
+:DmenuFinderCurDir
+   Find file from current directory, and all it's sub-directories.
+
+                                                    *:DmenuFinderRepo*
+:DmenuFinderRepo
+   Find file in current version controlled repository.
+
+                                                    *:DmenuFinderFindBuffer*
+:DmenuFinderFindBuffer
+   Find file that is open in one or more buffers.
+
+                                                *:DmenuFinderClearCache*
+:DmenuFinderClearCache
+   Clear cache. The plugin uses a cache to to speed up the search for files.
+   If new files are added to the repository or any of the previous searched
+   directories, then the cache becomes stale and it needs to be cleared.
+
+=============================================================================
+2. Mappings                                         *DmenuFinder-mappings*
+
+
+Here is an example of how you could map to the commands: >
+
+   nnoremap <silent> <leader>ff :DmenuFinderFindFile<cr>
+   nnoremap <silent> <leader>fd :DmenuFinderCurDir<cr>
+   nnoremap <silent> <leader>fr :DmenuFinderRepo<cr>
+   nnoremap <silent> <leader>fb :DmenuFinderFindBuffer<cr>
+   nnoremap <silent> <leader>fc :DmenuFinderClearCache<cr>
+
+=============================================================================
+4. Contributing                                 *DmenuFinder-contributing*
+
+https://github.com/has2k1/vim-dmenu-finder/issues
+
+vim:tw=78:ts=8:ft=help:norl:
